@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, Award, CheckCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export default function TakeExam() {
   const { examId } = useParams();
@@ -16,6 +17,9 @@ export default function TakeExam() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeLeft, setTimeLeft] = useState(3600); // 60 minutes in seconds
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showCertificateDialog, setShowCertificateDialog] = useState(false);
+  const [examScore, setExamScore] = useState(0);
 
   const exam = {
     title: 'Advanced JavaScript',
@@ -91,15 +95,121 @@ export default function TakeExam() {
   };
 
   const handleSubmit = () => {
-    toast({
-      title: "Exam Submitted",
-      description: "Your answers have been recorded. Results will be available shortly.",
-    });
-    navigate('/student/assessments');
+    // Calculate score (mock calculation - in real app this would be done server-side)
+    const score = 95; // Mock score for demo
+    setExamScore(score);
+    setIsSubmitted(true);
+    
+    // Check if certificate should be issued (90% or above)
+    if (score >= 90) {
+      setShowCertificateDialog(true);
+      toast({
+        title: "🎉 Congratulations!",
+        description: `You scored ${score}%! Your certificate is ready to download.`,
+        duration: 5000,
+      });
+    } else {
+      toast({
+        title: "Exam Submitted",
+        description: `You scored ${score}%. Keep practicing to earn your certificate!`,
+        variant: "default",
+      });
+    }
   };
 
   const progress = ((currentQuestion + 1) / exam.questions.length) * 100;
   const answeredCount = Object.keys(answers).length;
+
+  // Show results page after submission
+  if (isSubmitted) {
+    const passed = examScore >= 90;
+    return (
+      <DashboardLayout>
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader className="text-center">
+            <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+              passed ? 'bg-success/10' : 'bg-muted'
+            }`}>
+              {passed ? (
+                <Award className="h-8 w-8 text-success" />
+              ) : (
+                <CheckCircle className="h-8 w-8 text-muted-foreground" />
+              )}
+            </div>
+            <CardTitle>
+              {passed ? 'Congratulations! 🎉' : 'Exam Submitted Successfully!'}
+            </CardTitle>
+            <CardDescription>
+              {passed 
+                ? 'You passed with flying colors!' 
+                : 'Your answers have been recorded'
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <div className="text-4xl font-bold text-primary mb-2">{examScore}%</div>
+            {passed ? (
+              <>
+                <p className="text-muted-foreground">
+                  Amazing work! Your certificate has been automatically generated and is ready to download.
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={() => navigate('/student/certificates')}>
+                    <Award className="h-4 w-4 mr-2" />
+                    View Certificate
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/student/assessments')}>
+                    View Assessments
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground">
+                  Keep practicing! You need 90% or higher to earn a certificate.
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={() => navigate('/student/assessments')}>
+                    View My Assessments
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/student/dashboard')}>
+                    Back to Dashboard
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Certificate Earned Dialog */}
+        <AlertDialog open={showCertificateDialog} onOpenChange={setShowCertificateDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <div className="mx-auto w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-4">
+                <Award className="h-8 w-8 text-success" />
+              </div>
+              <AlertDialogTitle className="text-center text-2xl">
+                Certificate Earned! 🎉
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center">
+                Congratulations! You scored {examScore}% and earned a certificate for completing this course.
+                Your certificate is now available in your certificates section.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="sm:justify-center">
+              <Button onClick={() => {
+                setShowCertificateDialog(false);
+                navigate('/student/certificates');
+              }}>
+                <Award className="h-4 w-4 mr-2" />
+                View My Certificate
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

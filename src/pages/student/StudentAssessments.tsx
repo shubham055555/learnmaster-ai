@@ -121,7 +121,8 @@ export default function StudentAssessments() {
                       <>
                         <Button variant="outline">View Results</Button>
                         {assessment.score && assessment.score >= assessment.passingScore && (
-                          <Button onClick={() => navigate('/student/certificates')}>
+                          <Button onClick={() => navigate('/student/certificates')} className="bg-success hover:bg-success/90">
+                            <CheckCircle className="h-4 w-4 mr-2" />
                             View Certificate
                           </Button>
                         )}
